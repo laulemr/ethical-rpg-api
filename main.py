@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 
 app = FastAPI()
 
@@ -15,8 +15,8 @@ class CompassUpdate(BaseModel):
     dataEthics: Optional[int] = 0
     humanOversight: Optional[int] = 0
 
-conversation_history = []
-ethical_compass = {
+# Ethical compass can be kept static or reset after each request to stay stateless
+DEFAULT_COMPASS = {
     "transparency": 0,
     "equity": 0,
     "mindfulness": 0,
@@ -32,20 +32,11 @@ def read_root():
 @app.post("/ask")
 def ask(prompt: Prompt):
     reply = f"You asked: {prompt.prompt}. The world responds with uncertainty..."
-    conversation_history.append(prompt.prompt)
     return {"response": reply}
-
-@app.get("/conversation")
-def get_conversation():
-    return {"history": conversation_history}
-
-@app.post("/reset")
-def reset_conversation():
-    conversation_history.clear()
-    return {"message": "Conversation reset."}
 
 @app.post("/update_compass")
 def update_compass(update: CompassUpdate):
-    for key in ethical_compass:
-        ethical_compass[key] += getattr(update, key, 0)
-    return {"message": "Compass updated."}
+    updated_compass = DEFAULT_COMPASS.copy()
+    for key in updated_compass:
+        updated_compass[key] += getattr(update, key, 0)
+    return {"updatedCompass": updated_compass}
